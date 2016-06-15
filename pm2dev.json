@@ -1,0 +1,11 @@
+{
+ "apps": [{
+    "name": "api-users-write",
+    "script" : "src/index.js",
+    "instances": 1,
+    "exec_mode": "cluster",
+    "cwd": "/home/service/api-users-write",
+    "watch": true,
+    "ignore_watch": ["node_modules", ".sass-cache", ".git"]
+ }]
+}

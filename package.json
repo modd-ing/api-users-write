@@ -1,0 +1,22 @@
+{
+  "name": "api-users-write",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.3.0",
+    "bluebird": "^3.4.0",
+    "lodash": "^4.13.1",
+    "rethinkdbdash": "^2.3.8",
+    "rethinkdb-init": "^0.2.2",
+    "seneca": "^2.1.0",
+    "seneca-amqp-transport": "^0.2.2",
+    "validator": "^5.4.0"
+  }
+}
