@@ -132,11 +132,6 @@ module.exports = function () {
 
           });
 
-
-        done( null, {
-          data: result
-        });
-
       })
       .catch( ( err ) => {
 
