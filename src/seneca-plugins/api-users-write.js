@@ -3,7 +3,7 @@
 const Promise = require( 'bluebird' );
 
 Promise.config({
-	cancellation: true
+  cancellation: true
 });
 
 const bcrypt = require( 'bcryptjs' );
@@ -13,175 +13,175 @@ const _ = require( 'lodash' );
 
 module.exports = function () {
 
-	// Promisify the seneca .act() method
-	let act = Promise.promisify( this.act, { context: this });
+  // Promisify the seneca .act() method
+  let act = Promise.promisify( this.act, { context: this });
 
-	this.add( 'init:api-users-write', function( msg, done ) {
+  this.add( 'init:api-users-write', function( msg, done ) {
 
-		db.init()
-			.then( function() {
+    db.init()
+      .then( function() {
 
-				done();
+        done();
 
-			});
+      });
 
-	});
+  });
 
-	this.add( 'role:api,path:users,cmd:post', function( msg, done ) {
+  this.add( 'role:api,path:users,cmd:post', function( msg, done ) {
 
-		if ( ! msg.body ) {
+    if ( ! msg.body ) {
 
-			done( null, {
-				errors: [
-					{
-						title: 'Parameters not valid',
-						detail: 'JSON body is missing.',
-						propertyName: 'body',
-						status: 400
-					}
-				]
-			});
+      done( null, {
+        errors: [
+          {
+            title: 'Parameters not valid',
+            detail: 'JSON body is missing.',
+            propertyName: 'body',
+            status: 400
+          }
+        ]
+      });
 
-			return;
+      return;
 
-		}
+    }
 
-		let email = msg.body.email,
-			password = msg.body.password,
-			username = msg.body.username;
+    let email = msg.body.email,
+      password = msg.body.password,
+      username = msg.body.username;
 
-		let promise = Promise
-			.each([
-				act({
-					role: 'api',
-					path: 'users',
-					cmd: 'validateUsername',
-					username: username
-				}),
-				act({
-					role: 'api',
-					path: 'users',
-					cmd: 'validateEmail',
-					email: email
-				}),
-				act({
-					role: 'api',
-					path: 'users',
-					cmd: 'validatePassword',
-					password: password
-				})
-			], ( reply ) => {
+    let promise = Promise
+      .each([
+        act({
+          role: 'api',
+          path: 'users',
+          cmd: 'validateUsername',
+          username: username
+        }),
+        act({
+          role: 'api',
+          path: 'users',
+          cmd: 'validateEmail',
+          email: email
+        }),
+        act({
+          role: 'api',
+          path: 'users',
+          cmd: 'validatePassword',
+          password: password
+        })
+      ], ( reply ) => {
 
-				if ( ! _.isEmpty( reply.errors ) ) {
+        if ( ! _.isEmpty( reply.errors ) ) {
 
-					promise.cancel();
+          promise.cancel();
 
-					done( null, reply );
+          done( null, reply );
 
-				}
+        }
 
-			})
-			.then( () => {
+      })
+      .then( () => {
 
-				return hashPassword( password );
+        return hashPassword( password );
 
-			})
-			.then( ( hashedPassword ) => {
+      })
+      .then( ( hashedPassword ) => {
 
-				// Looks like username, email and password are all valid, let's create the user!
-				let user = {
-						username: username,
-						password: hashedPassword,
-						email: email
-					};
+        // Looks like username, email and password are all valid, let's create the user!
+        let user = {
+            username: username,
+            password: hashedPassword,
+            email: email
+          };
 
-				r
-					.table( 'User' )
-					.insert( user, { returnChanges: true } )
-					.run()
-					.then( ( result ) => {
+        r
+          .table( 'User' )
+          .insert( user, { returnChanges: true } )
+          .run()
+          .then( ( result ) => {
 
-						if ( 0 === result.inserted ) {
+            if ( 0 === result.inserted ) {
 
-							done( null, {
-								errors: [
-									{
-										title: 'Unknown error',
-										detail: 'Failed writing to database.',
-										status: 500
-									}
-								]
-							});
+              done( null, {
+                errors: [
+                  {
+                    title: 'Unknown error',
+                    detail: 'Failed writing to database.',
+                    status: 500
+                  }
+                ]
+              });
 
-							return;
+              return;
 
-						}
+            }
 
-						let data = result.changes[0].new_val;
+            let data = result.changes[0].new_val;
 
-						delete data.password;
+            delete data.password;
 
-						done( null, {
-							data: data
-						});
+            done( null, {
+              data: data
+            });
 
-					})
-					.catch( ( err ) => {
+          })
+          .catch( ( err ) => {
 
-						done( err, null );
+            done( err, null );
 
-					});
+          });
 
 
-				done( null, {
-					data: result
-				});
+        done( null, {
+          data: result
+        });
 
-			})
-			.catch( ( err ) => {
+      })
+      .catch( ( err ) => {
 
-				done( err, null );
+        done( err, null );
 
-			});
+      });
 
-	});
+  });
 
-	return {
-		name: 'api-users-write'
-	};
+  return {
+    name: 'api-users-write'
+  };
 
 };
 
 function hashPassword( password ) {
 
-	return new Promise( ( resolve, reject ) => {
+  return new Promise( ( resolve, reject ) => {
 
-		bcrypt.genSalt( 11, ( err, salt ) => {
+    bcrypt.genSalt( 11, ( err, salt ) => {
 
-			if ( err ) {
+      if ( err ) {
 
-				reject( err );
+        reject( err );
 
-				return;
+        return;
 
-			}
+      }
 
-			bcrypt.hash( password, salt, ( err, hash ) => {
+      bcrypt.hash( password, salt, ( err, hash ) => {
 
-				if ( err ) {
+        if ( err ) {
 
-					reject( err );
+          reject( err );
 
-					return;
+          return;
 
-				}
+        }
 
-				resolve( hash );
+        resolve( hash );
 
-			});
+      });
 
-		});
+    });
 
-	});
+  });
 
 }
