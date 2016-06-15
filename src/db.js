@@ -3,7 +3,7 @@
 const Promise = require( 'bluebird' );
 const r = require( 'rethinkdbdash' )({
 	host: 'rethinkdb-proxy',
-	db  : 'modding'
+	db: 'modding'
 });
 
 require( 'rethinkdb-init' )( r );
@@ -14,7 +14,7 @@ exports.init = function() {
 
 		r.init({
 				host: 'rethinkdb-proxy',
-				db  : 'modding'
+				db: 'modding'
 			}, [
 				{
 					name    : 'User',
