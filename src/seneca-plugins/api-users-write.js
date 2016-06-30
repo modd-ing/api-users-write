@@ -92,7 +92,8 @@ module.exports = function () {
         let user = {
             username: username,
             password: hashedPassword,
-            email: email
+            email: email,
+            role: 'basic'
           };
 
         r
