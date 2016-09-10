@@ -7,6 +7,7 @@ Promise.config({
 });
 
 const bcrypt = require( 'bcryptjs' );
+const db = require( '../db' );
 const r = db.r;
 const _ = require( 'lodash' );
 
