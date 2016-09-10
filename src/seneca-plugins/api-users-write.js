@@ -85,7 +85,7 @@ module.exports = function () {
             role: 'basic'
           };
 
-        r
+        return r
           .table( 'User' )
           .insert( user, { returnChanges: true } )
           .run()
