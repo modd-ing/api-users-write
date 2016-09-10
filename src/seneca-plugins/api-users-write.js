@@ -7,7 +7,6 @@ Promise.config({
 });
 
 const bcrypt = require( 'bcryptjs' );
-const db = require( '../db' );
 const r = db.r;
 const _ = require( 'lodash' );
 
@@ -15,17 +14,6 @@ module.exports = function () {
 
   // Promisify the seneca .act() method
   const act = Promise.promisify( this.act, { context: this });
-
-  this.add( 'init:api-users-write', function( msg, done ) {
-
-    db.init()
-      .then( function() {
-
-        done();
-
-      });
-
-  });
 
   this.add( 'role:api,path:users,cmd:post', function( msg, done ) {
 
