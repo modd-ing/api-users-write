@@ -14,7 +14,7 @@ const _ = require( 'lodash' );
 module.exports = function () {
 
   // Promisify the seneca .act() method
-  let act = Promise.promisify( this.act, { context: this });
+  const act = Promise.promisify( this.act, { context: this });
 
   this.add( 'init:api-users-write', function( msg, done ) {
 
@@ -46,11 +46,11 @@ module.exports = function () {
 
     }
 
-    let email = msg.body.email,
+    const email = msg.body.email,
       password = msg.body.password,
       username = msg.body.username;
 
-    let promise = Promise
+    const promise = Promise
       .each([
         act({
           role: 'api',
@@ -89,7 +89,7 @@ module.exports = function () {
       .then( ( hashedPassword ) => {
 
         // Looks like username, email and password are all valid, let's create the user!
-        let user = {
+        const user = {
             username: username,
             password: hashedPassword,
             email: email,
@@ -118,7 +118,7 @@ module.exports = function () {
 
             }
 
-            let data = result.changes[0].new_val;
+            const data = result.changes[0].new_val;
 
             delete data.password;
 

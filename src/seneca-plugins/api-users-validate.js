@@ -7,12 +7,12 @@ const _ = require( 'lodash' );
 module.exports = function () {
 
   // Promisify the seneca .act() method
-  let act = Promise.promisify( this.act, { context: this });
+  const act = Promise.promisify( this.act, { context: this });
 
   // Validate username
   this.add( 'role:api,path:users,cmd:validateUsername', function( msg, done ) {
 
-    let username = msg.username;
+    const username = msg.username;
 
     if ( ! username ) {
 
@@ -107,7 +107,7 @@ module.exports = function () {
     }
 
     // Syntax seems valid, lets check if username is already taken in the database
-    let queryParams = {
+    const queryParams = {
         username: username
       };
 
@@ -154,7 +154,7 @@ module.exports = function () {
   // Validate email
   this.add( 'role:api,path:users,cmd:validateEmail', function( msg, done ) {
 
-    let email = msg.email;
+    const email = msg.email;
 
     if ( ! email ) {
 
@@ -189,7 +189,7 @@ module.exports = function () {
     }
 
     // Syntax seems valid, lets check if email is already taken in the database
-    let queryParams = {
+    const queryParams = {
         email: email
       };
 
@@ -236,7 +236,7 @@ module.exports = function () {
   // Validate password
   this.add( 'role:api,path:users,cmd:validatePassword', function( msg, done ) {
 
-    let password = msg.password;
+    const password = msg.password;
 
     if ( ! password ) {
 
