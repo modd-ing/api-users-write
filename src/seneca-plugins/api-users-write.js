@@ -82,45 +82,376 @@ module.exports = function () {
             username: username,
             password: hashedPassword,
             email: email,
-            role: 'basic'
+            role: 'basic',
+            signature: '',
+            timestamp: r.now(),
+            color: '#ff5040',
+            followerCount: 0,
+            followeeCount: 0
           };
 
         return r
           .table( 'User' )
           .insert( user, { returnChanges: true } )
-          .run()
-          .then( ( result ) => {
+          .run();
 
-            if ( 0 === result.inserted ) {
+      })
+      .then( ( result ) => {
 
-              done( null, {
-                errors: [
-                  {
-                    title: 'Unknown error',
-                    detail: 'Failed writing to database.',
-                    status: 500
+        if ( 0 === result.inserted ) {
+
+          done( null, {
+            errors: [
+              {
+                title: 'Unknown error',
+                detail: 'Failed writing to database.',
+                status: 500
+              }
+            ]
+          });
+
+          return;
+
+        }
+
+        const data = result.changes[0].new_val;
+
+        delete data.password;
+
+        done( null, {
+          data: data
+        });
+
+      })
+      .catch( ( err ) => {
+
+        done( err, null );
+
+      });
+
+  });
+
+  this.add( 'role:api,path:users,cmd:patch', function( msg, done ) {
+
+    if ( ! msg.params || ! msg.params.id ) {
+
+      done( null, {
+        errors: [
+          {
+            title: 'Parameters not valid',
+            detail: 'User id is missing.',
+            propertyName: 'id',
+            status: 400
+          }
+        ]
+      });
+
+      return;
+
+    }
+
+    let currentState;
+
+    const queryParams = {
+        id: msg.params.id
+      };
+
+    const promise = act({
+        role: 'api',
+        path: 'users',
+        type: 'read',
+        cmd: 'getUsers',
+        args: queryParams,
+        options: {}
+      })
+      .then( ( reply ) => {
+
+        if ( _.isEmpty( reply.data ) ) {
+
+          // Looks like this user does not exist
+
+          done( null, { data: null });
+
+          promise.cancel();
+
+          return;
+
+        }
+
+        currentState = reply.data;
+
+        return currentState;
+
+      })
+      .then( ( reply ) => {
+
+        // User exists, check if we are authorized to update this user
+
+        return act({
+          role: 'api',
+          path: 'authorize',
+          cmd: 'userCan',
+          consumerJWT: msg.consumerJWT,
+          what: 'users:edit',
+          context: {
+            id: reply.id
+          }
+        });
+
+      })
+      .then( ( reply ) => {
+
+        if ( ! reply.can ) {
+
+          done( null, {
+            errors: [
+              {
+                title: 'Unauthorized',
+                detail: 'You are not authorized to do this.',
+                status: 403
+              }
+            ]
+          });
+
+          promise.cancel();
+
+          return;
+
+        }
+
+        return;
+
+      })
+      .then( () => {
+
+        const toUpdate = _.cloneDeep( msg.body ),
+          updated = {},
+          patchUserPropsPromise = new Promise( ( resolve, reject ) => {
+
+            function patchUserProps() {
+
+              if ( _.isEmpty( toUpdate ) ) {
+
+                resolve( updated );
+
+                return;
+
+              }
+
+              const prop = Object.keys( toUpdate )[0];
+
+              if (
+                'undefined' !== typeof currentState[ prop ] &&
+                currentState[ prop ] === toUpdate[ prop ]
+              ) {
+
+                delete toUpdate[ prop ];
+
+                return patchUserProps();
+
+              }
+
+              if ( 'username' === prop ) {
+
+                act({
+                  role: 'api',
+                  path: 'users',
+                  cmd: 'validateUsername',
+                  username: toUpdate.username
+                })
+                .then( ( reply ) => {
+
+                  if ( ! _.isEmpty( reply.errors ) ) {
+
+                    resolve( reply );
+
+                    return;
+
                   }
-                ]
-              });
 
-              return;
+                  updated.username = toUpdate.username;
+
+                  delete toUpdate.username;
+
+                  patchUserProps();
+
+                })
+                .catch( ( err ) => {
+
+                  patchUserPropsPromise.cancel();
+
+                  done( err, null );
+
+                });
+
+              } else if ( 'role' === prop ) {
+
+                act({
+                  role: 'api',
+                  path: 'users',
+                  cmd: 'validateRole',
+                  userRole: toUpdate.role
+                })
+                .then( ( reply ) => {
+
+                  if ( ! _.isEmpty( reply.errors ) ) {
+
+                    resolve( reply );
+
+                    return;
+
+                  }
+
+                  updated.role = toUpdate.role;
+
+                  delete toUpdate.role;
+
+                  patchUserProps();
+
+                })
+                .catch( ( err ) => {
+
+                  patchUserPropsPromise.cancel();
+
+                  done( err, null );
+
+                });
+
+              } else if ( 'signature' === prop ) {
+
+                act({
+                  role: 'api',
+                  path: 'users',
+                  cmd: 'validateSignature',
+                  signature: toUpdate.signature
+                })
+                .then( ( reply ) => {
+
+                  if ( ! _.isEmpty( reply.errors ) ) {
+
+                    resolve( reply );
+
+                    return;
+
+                  }
+
+                  updated.signature = toUpdate.signature;
+
+                  delete toUpdate.signature;
+
+                  patchUserProps();
+
+                })
+                .catch( ( err ) => {
+
+                  patchUserPropsPromise.cancel();
+
+                  done( err, null );
+
+                });
+
+              } else if ( 'color' === prop ) {
+
+                act({
+                  role: 'api',
+                  path: 'users',
+                  cmd: 'validateColor',
+                  color: toUpdate.color
+                })
+                .then( ( reply ) => {
+
+                  if ( ! _.isEmpty( reply.errors ) ) {
+
+                    resolve( reply );
+
+                    return;
+
+                  }
+
+                  updated.color = toUpdate.color;
+
+                  delete toUpdate.color;
+
+                  patchUserProps();
+
+                })
+                .catch( ( err ) => {
+
+                  patchUserPropsPromise.cancel();
+
+                  done( err, null );
+
+                });
+
+              } else {
+
+                delete toUpdate[ prop ];
+
+                return patchUserProps();
+
+              }
 
             }
 
-            const data = result.changes[0].new_val;
-
-            delete data.password;
-
-            done( null, {
-              data: data
-            });
-
-          })
-          .catch( ( err ) => {
-
-            done( err, null );
+            patchUserProps();
 
           });
+
+        return patchUserPropsPromise;
+
+      })
+      .then( ( updated ) => {
+
+        if ( ! _.isEmpty( updated.errors ) ) {
+
+          done( null, {
+            errors: updated.errors
+          });
+
+          promise.cancel();
+
+          return;
+
+        }
+
+        if ( ! _.isEmpty( updated ) ) {
+
+          return r
+            .table( 'User' )
+            .get( currentState.id )
+            .update( updated, { returnChanges: true } )
+            .run();
+
+        }
+
+        return {
+          replaced: 0
+        };
+
+      })
+      .then( ( result ) => {
+
+        if ( 0 === result.replaced ) {
+
+          const data = currentState;
+
+          delete data.password;
+
+          done( null, {
+            data: data
+          });
+
+          return;
+
+        }
+
+        const data = result.changes[0].new_val;
+
+        delete data.password;
+
+        done( null, {
+          data: data
+        });
 
       })
       .catch( ( err ) => {

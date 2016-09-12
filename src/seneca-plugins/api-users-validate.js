@@ -277,7 +277,7 @@ module.exports = function () {
   // Validate role
   this.add( 'role:api,path:users,cmd:validateRole', function( msg, done ) {
 
-    const role = msg.roleToCheck,
+    const role = msg.userRole,
       allowedRoles = [
         'basic',
         'moderator',
@@ -305,8 +305,170 @@ module.exports = function () {
 
   });
 
+  // Validate signature
+  this.add( 'role:api,path:users,cmd:validateSignature', function( msg, done ) {
+
+    const signature = msg.signature;
+
+    if ( ! validator.isLength( signature, 0, 30 ) ) {
+
+      done( null, {
+        errors: [
+          {
+            title: 'Signature not valid',
+            detail: 'Signature can have up to 30 characters.',
+            propertyName: 'signature',
+            status: 400
+          }
+        ]
+      });
+
+      return;
+
+    } else if ( signature.trim() !== signature ) {
+
+      done( null, {
+        errors: [
+          {
+            title: 'Signature not valid',
+            detail: 'Whitespace was found at the start or at the end of the signature.',
+            propertyName: 'signature',
+            status: 400
+          }
+        ]
+      });
+
+      return;
+
+    }
+
+    done( null, {});
+
+  });
+
+  // Validate color
+  this.add( 'role:api,path:users,cmd:validateColor', function( msg, done ) {
+
+    const color = msg.color;
+
+    if ( ! validator.isHexColor( color ) ) {
+
+      done( null, {
+        errors: [
+          {
+            title: 'Color not valid',
+            detail: 'A non-valid hex color was provided.',
+            propertyName: 'color',
+            status: 400
+          }
+        ]
+      });
+
+      return;
+
+    }
+
+    const rgbColor = colorHexToRgb( color );
+
+    if ( colorIsTooBright( rgbColor, 70 ) ) {
+
+      done( null, {
+        errors: [
+          {
+            title: 'Color not valid',
+            detail: 'Color provided is too bright.',
+            propertyName: 'color',
+            status: 400
+          }
+        ]
+      });
+
+      return;
+
+    } else if ( colorIsTooDark( rgbColor, 25 ) ) {
+
+      done( null, {
+        errors: [
+          {
+            title: 'Color not valid',
+            detail: 'Color provided is too dark.',
+            propertyName: 'color',
+            status: 400
+          }
+        ]
+      });
+
+      return;
+
+    }
+
+    done( null, {});
+
+  });
+
   return {
     name: 'api-users-validate'
   };
+
+};
+
+// Checks whether the provided color is too bright
+function colorIsTooBright( rgb, max ) {
+
+  max = max || 0;
+
+  const brightness = ( ( rgb.r * 299 ) + ( rgb.g * 587 ) + ( rgb.b * 114 ) ) / 2550;
+
+  if ( brightness <= max ) {
+
+    return false;
+
+  }
+
+  return true;
+
+};
+
+// Checks whether the provided color is too dark
+function colorIsTooDark( rgb, min ) {
+
+  min = min || 100;
+
+  const brightness = ( ( rgb.r * 299 ) + ( rgb.g * 587 ) + ( rgb.b * 114 ) ) / 2550;
+
+  if ( brightness >= min ) {
+
+    return false;
+
+  }
+
+  return true;
+
+};
+
+// Converts hex color to rgb
+function colorHexToRgb( hex ) {
+
+	// Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+	const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+	hex = hex.replace( shorthandRegex, function( m, r, g, b ) {
+
+		return r + r + g + g + b + b;
+
+	});
+
+	const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec( hex );
+
+  if ( ! result ) {
+
+    return null;
+
+  }
+
+	return {
+		r: parseInt( result[1], 16 ),
+		g: parseInt( result[2], 16 ),
+		b: parseInt( result[3], 16 )
+	};
 
 };
