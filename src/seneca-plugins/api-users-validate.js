@@ -274,6 +274,37 @@ module.exports = function () {
 
   });
 
+  // Validate role
+  this.add( 'role:api,path:users,cmd:validateRole', function( msg, done ) {
+
+    const role = msg.roleToCheck,
+      allowedRoles = [
+        'basic',
+        'moderator',
+        'administrator'
+      ];
+
+    if ( -1 === allowedRoles.indexOf( role ) ) {
+
+      done( null, {
+        errors: [
+          {
+            title: 'Role not valid',
+            detail: 'Role provided is not on a list of known roles.',
+            propertyName: 'role',
+            status: 400
+          }
+        ]
+      });
+
+      return;
+
+    }
+
+    done( null, {});
+
+  });
+
   return {
     name: 'api-users-validate'
   };
