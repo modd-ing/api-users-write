@@ -37,6 +37,11 @@ seneca.ready( function( err ) {
       pin: 'role:api,path:attachments,type:read',
       type: 'amqp',
       url: 'amqp://rabbitmq-api'
+    })
+    .client({
+      pin: 'role:api,path:attachments,type:write',
+      type: 'amqp',
+      url: 'amqp://rabbitmq-api'
     });
 
 });
