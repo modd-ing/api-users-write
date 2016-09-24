@@ -284,6 +284,102 @@ module.exports = function () {
 
                 });
 
+              } else if ( 'password' === prop ) {
+
+                if ( ! msg.query || ! msg.query.token ) {
+
+                  // You need a token to update the password
+                  resolve({
+                    errors: [
+                      {
+                        title: 'Token not valid',
+                        detail: 'Token was not provided.',
+                        propertyName: 'token',
+                        status: 400
+                      }
+                    ]
+                  });
+
+                  return;
+
+                }
+
+                const passwordUpdatePromise = act({
+                  role: 'api',
+                  path: 'users',
+                  cmd: 'validatePassword',
+                  password: toUpdate.password
+                })
+                .then( ( reply ) => {
+
+                  if ( ! _.isEmpty( reply.errors ) ) {
+
+                    resolve( reply );
+
+                    passwordUpdatePromise.cancel();
+
+                    return;
+
+                  }
+
+                  return act({
+                    role: 'api',
+                    path: 'tokens',
+                    cmd: 'getTokens',
+                    args: {
+                      id: msg.query.token
+                    },
+                    options: {}
+                  });
+
+                })
+                .then( ( reply ) => {
+
+                  if ( _.isEmpty( reply.data ) || currentState.id !== reply.data.userId ) {
+
+                    // Looks like this token does not exist
+                    resolve({
+                      errors: [
+                        {
+                          title: 'Token not valid',
+                          detail: 'Token is not valid or it expired.',
+                          propertyName: 'token',
+                          status: 400
+                        }
+                      ]
+                    });
+
+                    passwordUpdatePromise.cancel();
+
+                    return;
+
+                  }
+
+                  return hashPassword( toUpdate.password );
+
+                })
+                .then( ( hashedPassword ) => {
+
+                  updated.password = hashedPassword;
+
+                  delete toUpdate.password;
+
+                  return r.table( 'Token' ).get( msg.query.token ).delete().run();
+
+                })
+                .then( ( reply ) => {
+
+                  patchUserProps();
+
+                })
+                .catch( ( err ) => {
+
+                  patchUserPropsPromise.cancel();
+
+                  done( err, null );
+
+                });
+
               } else if ( 'role' === prop ) {
 
                 act({
