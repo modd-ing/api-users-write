@@ -29,6 +29,21 @@ module.exports = function () {
 
       return;
 
+    } else if ( 'string' !== typeof username ) {
+
+      done( null, {
+        errors: [
+          {
+            title: 'Username not valid',
+            detail: 'Username has to be a string.',
+            propertyName: 'username',
+            status: 400
+          }
+        ]
+      });
+
+      return;
+
     } else if ( ! validator.isLength( username, 2 ) ) {
 
       done( null, {
@@ -171,6 +186,21 @@ module.exports = function () {
 
       return;
 
+    } else if ( 'string' !== typeof email ) {
+
+      done( null, {
+        errors: [
+          {
+            title: 'Email not valid',
+            detail: 'Email has to be a string.',
+            propertyName: 'email',
+            status: 400
+          }
+        ]
+      });
+
+      return;
+
     } else if ( ! validator.isEmail( email ) ) {
 
       done( null, {
@@ -253,6 +283,21 @@ module.exports = function () {
 
       return;
 
+    } else if ( 'string' !== typeof password ) {
+
+      done( null, {
+        errors: [
+          {
+            title: 'Password not valid',
+            detail: 'Password has to be a string.',
+            propertyName: 'password',
+            status: 400
+          }
+        ]
+      });
+
+      return;
+
     } else if ( ! validator.isLength( password, 8 ) ) {
 
       done( null, {
@@ -284,7 +329,22 @@ module.exports = function () {
         'administrator'
       ];
 
-    if ( -1 === allowedRoles.indexOf( role ) ) {
+    if ( 'string' !== typeof role ) {
+
+      done( null, {
+        errors: [
+          {
+            title: 'Role not valid',
+            detail: 'Role has to be a string.',
+            propertyName: 'role',
+            status: 400
+          }
+        ]
+      });
+
+      return;
+
+    } else if ( -1 === allowedRoles.indexOf( role ) ) {
 
       done( null, {
         errors: [
@@ -310,7 +370,22 @@ module.exports = function () {
 
     const signature = msg.signature;
 
-    if ( ! validator.isLength( signature, 0, 30 ) ) {
+    if ( 'string' !== typeof signature ) {
+
+      done( null, {
+        errors: [
+          {
+            title: 'Signature not valid',
+            detail: 'Signature has to be a string.',
+            propertyName: 'signature',
+            status: 400
+          }
+        ]
+      });
+
+      return;
+
+    } else if ( ! validator.isLength( signature, 0, 30 ) ) {
 
       done( null, {
         errors: [
@@ -351,7 +426,22 @@ module.exports = function () {
 
     const color = msg.color;
 
-    if ( ! validator.isHexColor( color ) ) {
+    if ( 'string' !== typeof color ) {
+
+      done( null, {
+        errors: [
+          {
+            title: 'Color not valid',
+            detail: 'Color has to be a string.',
+            propertyName: 'color',
+            status: 400
+          }
+        ]
+      });
+
+      return;
+
+    } else if ( ! validator.isHexColor( color ) ) {
 
       done( null, {
         errors: [
