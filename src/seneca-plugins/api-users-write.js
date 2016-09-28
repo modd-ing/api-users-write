@@ -82,12 +82,11 @@ module.exports = function () {
             username: username,
             password: hashedPassword,
             email: email,
+            emailConfirmed: false,
             role: 'basic',
             signature: '',
             timestamp: r.now(),
-            color: '#ff5040',
-            followerCount: 0,
-            followeeCount: 0
+            color: '#ff5040'
           };
 
         return r
@@ -335,9 +334,13 @@ module.exports = function () {
                 })
                 .then( ( reply ) => {
 
-                  if ( _.isEmpty( reply.data ) || currentState.id !== reply.data.userId ) {
+                  if (
+                    _.isEmpty( reply.data ) ||
+                    currentState.id !== reply.data.userId ||
+                    reply.data.type !== 'password:update'
+                  ) {
 
-                    // Looks like this token does not exist
+                    // Looks like this token does not exist, or is not valid
                     resolve({
                       errors: [
                         {
@@ -363,6 +366,81 @@ module.exports = function () {
                   updated.password = hashedPassword;
 
                   delete toUpdate.password;
+
+                  return r.table( 'Token' ).get( msg.query.token ).delete().run();
+
+                })
+                .then( ( reply ) => {
+
+                  patchUserProps();
+
+                })
+                .catch( ( err ) => {
+
+                  patchUserPropsPromise.cancel();
+
+                  done( err, null );
+
+                });
+
+              } else if ( 'emailConfirmed' === prop ) {
+
+                if ( ! msg.query || ! msg.query.token ) {
+
+                  // You need a token to update the emailConfirmed property
+                  resolve({
+                    errors: [
+                      {
+                        title: 'Token not valid',
+                        detail: 'Token was not provided.',
+                        propertyName: 'token',
+                        status: 400
+                      }
+                    ]
+                  });
+
+                  return;
+
+                }
+
+                const getTokensPromise = act({
+                  role: 'api',
+                  path: 'tokens',
+                  cmd: 'getTokens',
+                  args: {
+                    id: msg.query.token
+                  },
+                  options: {}
+                })
+                .then( ( reply ) => {
+
+                  if (
+                    _.isEmpty( reply.data ) ||
+                    currentState.id !== reply.data.userId ||
+                    reply.data.type !== 'emailConfirmed:update'
+                  ) {
+
+                    // Looks like this token does not exist, or is not valid
+                    resolve({
+                      errors: [
+                        {
+                          title: 'Token not valid',
+                          detail: 'Token is not valid or it expired.',
+                          propertyName: 'token',
+                          status: 400
+                        }
+                      ]
+                    });
+
+                    getTokensPromise.cancel();
+
+                    return;
+
+                  }
+
+                  updated.emailConfirmed = !! toUpdate.emailConfirmed;
+
+                  delete toUpdate.emailConfirmed;
 
                   return r.table( 'Token' ).get( msg.query.token ).delete().run();
 
